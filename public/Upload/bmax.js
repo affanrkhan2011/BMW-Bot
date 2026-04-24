@@ -195,19 +195,24 @@ You are the first impression of the BMW brand for this customer. Make it count.`
     }
 
     try {
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const geminiMessages = conversationHistory.map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.apiKey}`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          "x-api-key": config.apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-dangerous-direct-browser-access": "true"
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: config.model || "claude-3-5-sonnet-20241022",
-          max_tokens: config.maxTokens || 500,
-          system: SYSTEM_PROMPT,
-          messages: conversationHistory
+          systemInstruction: {
+            parts: [{ text: SYSTEM_PROMPT }]
+          },
+          contents: geminiMessages,
+          generationConfig: {
+            maxOutputTokens: config.maxTokens || 500
+          }
         })
       });
 
@@ -220,7 +225,7 @@ You are the first impression of the BMW brand for this customer. Make it count.`
         conversationHistory.pop();
       } else {
         const data = await response.json();
-        const bmaxResponse = data.content[0].text;
+        const bmaxResponse = data.candidates[0].content.parts[0].text;
         addMessage('assistant', bmaxResponse);
         conversationHistory.push({ role: 'assistant', content: bmaxResponse });
       }
