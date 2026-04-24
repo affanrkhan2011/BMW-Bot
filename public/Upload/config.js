@@ -1,5 +1,12 @@
 const BMAX_CONFIG = {
-  apiKey: "AIzaSyCW5gf3gMzPLg0l4EaqXFumzv9nQ0R_j14",  // User pastes their key here
+  // Option 1: Vercel Secure Mode (Recommended)
+  // Set apiUrl to '/api/chat' and add your GEMINI_API_KEY in Vercel's Environment Variables settings.
+  apiUrl: "/api/chat",
+  
+  // Option 2: Local testing mode (Not secure for production)
+  // You can still paste your key here for local testing, but clear it before pushing to GitHub!
+  apiKey: "",  
+  
   model: "gemini-2.5-flash",
   maxTokens: 500,
   dealershipName: "BMW",

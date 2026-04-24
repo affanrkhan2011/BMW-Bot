@@ -159,10 +159,10 @@ You are the first impression of the BMW brand for this customer. Make it count.`
     conversationHistory.push({ role: 'user', content: userText });
     showTyping();
 
-    if (!config.apiKey) {
+    if (!config.apiKey && !config.apiUrl) {
       setTimeout(() => {
         hideTyping();
-        addMessage('assistant', "I'm currently running in demo mode without an API key. Please add your key to <code>config.js</code> to enable my AI capabilities.");
+        addMessage('assistant', "I'm currently running in demo mode without an API key or secure endpoint. Please check your <code>config.js</code>.");
         conversationHistory.pop();
         sendBtn.disabled = false;
         input.focus();
@@ -176,13 +176,17 @@ You are the first impression of the BMW brand for this customer. Make it count.`
         parts: [{ text: msg.content }]
       }));
 
-      let modelEndpoint = config.model || "gemini-2.0-flash:generateContent";
-      // If config.model does not end with :generateContent, maybe add it, but user put it in config.
+      let modelEndpoint = config.model || "gemini-2.5-flash:generateContent";
       if (!modelEndpoint.includes(":generateContent")) {
           modelEndpoint += ":generateContent";
       }
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}?key=${config.apiKey}`, {
+      // Route the request securely to our Vercel function if defined, otherwise direct to Gemini (insecure)
+      const targetUrl = config.apiUrl 
+        ? `${config.apiUrl}?model=${encodeURIComponent(modelEndpoint)}`
+        : `https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}?key=${config.apiKey}`;
+
+      const response = await fetch(targetUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
