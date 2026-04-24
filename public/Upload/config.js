@@ -7,7 +7,7 @@ const BMAX_CONFIG = {
   // You can still paste your key here for local testing, but clear it before pushing to GitHub!
   apiKey: "",  
   
-  model: "gemini-2.5-flash",
+  model: "gemini-2.0-flash",
   maxTokens: 500,
   dealershipName: "BMW",
   dealershipPhone: "1-800-831-1117",
