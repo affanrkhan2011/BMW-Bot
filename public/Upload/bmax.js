@@ -36,13 +36,20 @@ You are the first impression of the BMW brand for this customer. Make it count.`
   let conversationHistory = [];
 
   // Determine base URL to load CSS
-  let scriptPaths = document.getElementsByTagName('script');
-  let currentScript = scriptPaths[scriptPaths.length - 1];
-  let baseUrl = '/Upload/';
-  
+  let baseUrl = './Upload/';
+  const currentScript = document.currentScript;
   if (currentScript && currentScript.src && currentScript.src.includes('bmax.js')) {
       let src = currentScript.src;
       baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
+  } else {
+      let scriptPaths = document.getElementsByTagName('script');
+      for (let i = 0; i < scriptPaths.length; i++) {
+          if (scriptPaths[i].src && scriptPaths[i].src.includes('bmax.js')) {
+              let src = scriptPaths[i].src;
+              baseUrl = src.substring(0, src.lastIndexOf('/') + 1);
+              break;
+          }
+      }
   }
 
   // Load CSS
