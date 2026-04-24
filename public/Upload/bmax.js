@@ -80,12 +80,6 @@ You are the first impression of the BMW brand for this customer. Make it count.`
           </svg>
           <div id="bmax-header-title">BMAX — Your BMW Advisor</div>
         </div>
-        <div id="bmax-close" title="Close chat">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </div>
       </div>
       <div id="bmax-messages">
         <div class="bmax-message bmax-assistant">${config.welcomeMessage}</div>
@@ -107,43 +101,18 @@ You are the first impression of the BMW brand for this customer. Make it count.`
         </button>
       </div>
     </div>
-    <div id="bmax-launcher" class="pulse" title="Chat with BMW">
-      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-         <circle cx="50" cy="50" r="48" stroke="currentColor" stroke-width="4"/>
-         <circle cx="50" cy="50" r="42" fill="currentColor"/>
-         <path d="M50 8C26.8 8 8 26.8 8 50H50V8Z" fill="var(--bmax-primary)"/>
-         <path d="M92 50C92 26.8 73.2 8 50 8V50H92Z" fill="currentColor"/>
-         <path d="M50 92C73.2 92 92 73.2 92 50H50V92Z" fill="var(--bmax-primary)"/>
-         <path d="M8 50C8 73.2 26.8 92 50 92V50H8Z" fill="currentColor"/>
-         <circle cx="50" cy="50" r="16" fill="#1C69D4"/>
-      </svg>
-    </div>
   `;
 
   document.body.appendChild(container);
 
-  const launcher = document.getElementById('bmax-launcher');
   const panel = document.getElementById('bmax-panel');
-  const closeBtn = document.getElementById('bmax-close');
   const input = document.getElementById('bmax-input');
   const sendBtn = document.getElementById('bmax-send');
   const messagesArea = document.getElementById('bmax-messages');
   const chipsContainer = document.getElementById('bmax-chips-container');
-  let isOpen = false;
 
-  launcher.addEventListener('click', () => {
-    isOpen = true;
-    launcher.classList.remove('pulse');
-    panel.classList.add('open');
-    launcher.style.display = 'none';
-    input.focus();
-  });
-
-  closeBtn.addEventListener('click', () => {
-    isOpen = false;
-    panel.classList.remove('open');
-    launcher.style.display = 'flex';
-  });
+  // Set initial focus
+  setTimeout(() => input.focus(), 100);
 
   function addMessage(role, text) {
     const msg = document.createElement('div');
@@ -269,10 +238,5 @@ You are the first impression of the BMW brand for this customer. Make it count.`
       sendMessage(e.target.textContent);
     });
   });
-
-  // Automatically open the chatbot on load
-  setTimeout(() => {
-    if (!isOpen) launcher.click();
-  }, 300);
 
 })();
