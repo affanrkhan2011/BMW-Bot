@@ -24,21 +24,38 @@ export default defineConfig(({mode}) => {
         req.on('end', async () => {
           try {
             const parsedBody = JSON.parse(body);
-            const apiKey = env.GEMINI_API_KEY;
+            const apiKey = env.GROQ_API_KEY || env.GEMINI_API_KEY;
             
             if (!apiKey) {
               res.statusCode = 500;
               res.setHeader('Content-Type', 'application/json');
-              return res.end(JSON.stringify({ error: 'GEMINI_API_KEY environment variable is not configured locally.' }));
+              return res.end(JSON.stringify({ error: 'GROQ_API_KEY or GEMINI_API_KEY environment variable is not configured locally.' }));
             }
 
             const urlParams = new URLSearchParams(req.url.split('?')[1]);
-            const modelEndpoint = urlParams.get('model') || "gemini-2.5-flash:generateContent";
+            const isGroq = apiKey.startsWith('gsk_');
 
-            const fetchResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}?key=${apiKey}`, {
+            let fetchUrl, fetchBody;
+            const fetchHeaders = { 'Content-Type': 'application/json' };
+
+            if (isGroq) {
+              fetchHeaders['Authorization'] = `Bearer ${apiKey}`;
+              fetchUrl = 'https://api.groq.com/openai/v1/chat/completions';
+              fetchBody = JSON.stringify({
+                model: urlParams.get('model') || "llama3-70b-8192",
+                messages: parsedBody.messages || [],
+                max_tokens: parsedBody.maxTokens || 500
+              });
+            } else {
+              const modelEndpoint = urlParams.get('model') || "gemini-2.5-flash:generateContent";
+              fetchUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}?key=${apiKey}`;
+              fetchBody = JSON.stringify(parsedBody);
+            }
+
+            const fetchResponse = await fetch(fetchUrl, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(parsedBody)
+              headers: fetchHeaders,
+              body: fetchBody
             });
             const data = await fetchResponse.text();
             res.setHeader('Content-Type', 'application/json');

@@ -176,30 +176,71 @@ You are the first impression of the BMW brand for this customer. Make it count.`
         parts: [{ text: msg.content }]
       }));
 
-      let modelEndpoint = config.model || "gemini-2.5-flash:generateContent";
-      if (!modelEndpoint.includes(":generateContent")) {
-          modelEndpoint += ":generateContent";
-      }
+      let targetUrl = '';
+      let requestBody = {};
+      const isGroq = (config.apiKey && config.apiKey.startsWith('gsk_')) || (config.model && config.model.includes('llama'));
 
-      // Route the request securely to our Vercel function if defined, otherwise direct to Gemini (insecure)
-      const targetUrl = config.apiUrl 
-        ? `${config.apiUrl}?model=${encodeURIComponent(modelEndpoint)}`
-        : `https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}?key=${config.apiKey}`;
-
-      const response = await fetch(targetUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
+      if (isGroq) {
+        let groqModel = config.model;
+        if (!groqModel || groqModel.includes('gemini')) {
+            groqModel = "llama3-70b-8192";
+        }
+        targetUrl = config.apiUrl 
+          ? `${config.apiUrl}?model=${encodeURIComponent(groqModel)}`
+          : `https://api.groq.com/openai/v1/chat/completions`;
+          
+        requestBody = {
+          model: groqModel,
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            ...conversationHistory.map(msg => ({ 
+              role: msg.role === 'assistant' ? 'assistant' : 'user', 
+              content: msg.content 
+            }))
+          ],
+          max_tokens: config.maxTokens || 500
+        };
+      } else {
+        let modelEndpoint = config.model || "gemini-2.5-flash:generateContent";
+        if (!modelEndpoint.includes(":generateContent")) {
+            modelEndpoint += ":generateContent";
+        }
+        targetUrl = config.apiUrl 
+          ? `${config.apiUrl}?model=${encodeURIComponent(modelEndpoint)}`
+          : `https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}?key=${config.apiKey}`;
+          
+        requestBody = {
           systemInstruction: {
             parts: [{ text: SYSTEM_PROMPT }]
           },
           contents: geminiMessages,
           generationConfig: {
             maxOutputTokens: config.maxTokens || 500
-          }
-        })
+          },
+          // include messages for Vercel proxy fallback
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            ...conversationHistory.map(msg => ({ 
+              role: msg.role === 'assistant' ? 'assistant' : 'user', 
+              content: msg.content 
+            }))
+          ]
+        };
+      }
+      
+      const fetchHeaders = {
+        "Content-Type": "application/json"
+      };
+      
+      // Add Authorization header if hitting Groq API directly
+      if (isGroq && !config.apiUrl) {
+         fetchHeaders["Authorization"] = `Bearer ${config.apiKey}`;
+      }
+
+      const response = await fetch(targetUrl, {
+        method: "POST",
+        headers: fetchHeaders,
+        body: JSON.stringify(requestBody)
       });
 
       hideTyping();
@@ -212,7 +253,17 @@ You are the first impression of the BMW brand for this customer. Make it count.`
         conversationHistory.pop();
       } else {
         const data = await response.json();
-        const bmaxResponse = data.candidates[0].content.parts[0].text;
+        let bmaxResponse = "";
+        
+        if (isGroq && data.choices && data.choices[0] && data.choices[0].message) {
+           bmaxResponse = data.choices[0].message.content;
+        } else if (data.candidates && data.candidates[0] && data.candidates[0].content) {
+           bmaxResponse = data.candidates[0].content.parts[0].text;
+        } else {
+           console.error("Unknown response format:", data);
+           throw new Error("Unknown response format");
+        }
+        
         addMessage('assistant', bmaxResponse);
         conversationHistory.push({ role: 'assistant', content: bmaxResponse });
       }
