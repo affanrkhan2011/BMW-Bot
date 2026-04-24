@@ -234,7 +234,8 @@ You are the first impression of the BMW brand for this customer. Make it count.`
       if (!response.ok) {
         const err = await response.json();
         console.error("BMAX API Error:", err);
-        addMessage('assistant', "I'm having trouble connecting right now. Please check your API key configuration and try again shortly.");
+        const errMsg = err.error && err.error.message ? err.error.message : JSON.stringify(err);
+        addMessage('assistant', `I'm having trouble connecting right now. Error from API: ${errMsg}`);
         conversationHistory.pop();
       } else {
         const data = await response.json();
