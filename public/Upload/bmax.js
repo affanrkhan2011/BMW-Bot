@@ -193,7 +193,7 @@ You are the first impression of the BMW brand for this customer. Make it count.`
     if (!config.apiKey) {
       setTimeout(() => {
         hideTyping();
-        addMessage('assistant', "I'm currently running in demo mode without an Anthropic API key. Please add your key to <code>config.js</code> to enable my AI capabilities.");
+        addMessage('assistant', "I'm currently running in demo mode without an API key. Please add your key to <code>config.js</code> to enable my AI capabilities.");
         conversationHistory.pop();
         sendBtn.disabled = false;
         input.focus();
@@ -207,7 +207,13 @@ You are the first impression of the BMW brand for this customer. Make it count.`
         parts: [{ text: msg.content }]
       }));
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.apiKey}`, {
+      let modelEndpoint = config.model || "gemini-2.0-flash:generateContent";
+      // If config.model does not end with :generateContent, maybe add it, but user put it in config.
+      if (!modelEndpoint.includes(":generateContent")) {
+          modelEndpoint += ":generateContent";
+      }
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelEndpoint}?key=${config.apiKey}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
