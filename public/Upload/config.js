@@ -1,6 +1,6 @@
 const BMAX_CONFIG = {
   apiKey: "AIzaSyCW5gf3gMzPLg0l4EaqXFumzv9nQ0R_j14",  // User pastes their key here
-  model: "claude-3-5-sonnet-20241022",
+  model: "gemini-1.5-flash-8b:generateContent",
   maxTokens: 500,
   dealershipName: "BMW",
   dealershipPhone: "1-800-831-1117",
